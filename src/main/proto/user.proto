@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.cashpilot.userservice.grpc";
+option java_outer_classname = "UserProfileProto";
+
+import "google/protobuf/empty.proto";
+
+service UserProfileService {
+  rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse);
+
+  rpc CreateUserProfile(CreateUserProfileRequest) returns (UserProfileResponse);
+
+  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UserProfileResponse);
+}
+
+message GetUserProfileRequest {
+  string user_id = 1;
+}
+
+message CreateUserProfileRequest {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+}
+
+message UpdateUserProfileRequest {
+  string user_id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string default_currency = 4;
+}
+
+message UserProfileResponse {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string default_currency = 6;
+}
