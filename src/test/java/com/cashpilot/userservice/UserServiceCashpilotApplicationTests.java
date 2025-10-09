@@ -1,4 +1,4 @@
-package com.rus1it.userservicecashpilot;
+package com.cashpilot.userservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

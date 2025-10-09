@@ -1,8 +1,8 @@
-package com.rus1it.userservicecashpilot.service;
+package com.cashpilot.userservice.service;
 
 import com.cashpilot.userservice.grpc.*;
-import com.rus1it.userservicecashpilot.entity.UserProfile;
-import com.rus1it.userservicecashpilot.repository.UserProfileRepository;
+import com.cashpilot.userservice.entity.UserProfile;
+import com.cashpilot.userservice.repository.UserProfileRepository;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -19,6 +19,7 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
     @Override
     @Transactional
     public void createUserProfile(CreateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
+        System.out.println("Request :"+ request);
         UserProfile newUserProfile = new UserProfile();
         newUserProfile.setUserId(request.getUserId());
         newUserProfile.setUsername(request.getUsername());

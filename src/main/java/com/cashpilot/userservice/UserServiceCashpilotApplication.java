@@ -1,4 +1,4 @@
-package com.rus1it.userservicecashpilot;
+package com.cashpilot.userservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

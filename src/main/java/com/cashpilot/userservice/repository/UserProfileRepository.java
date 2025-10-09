@@ -1,6 +1,6 @@
-package com.rus1it.userservicecashpilot.repository;
+package com.cashpilot.userservice.repository;
 
-import com.rus1it.userservicecashpilot.entity.UserProfile;
+import com.cashpilot.userservice.entity.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
