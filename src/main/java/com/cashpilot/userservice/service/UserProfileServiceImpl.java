@@ -3,10 +3,14 @@ package com.cashpilot.userservice.service;
 import com.cashpilot.userservice.grpc.*;
 import com.cashpilot.userservice.entity.UserProfile;
 import com.cashpilot.userservice.repository.UserProfileRepository;
+import io.envoyproxy.pgv.ValidationException;
+import io.envoyproxy.pgv.ValidatorImpl;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.Optional;
 
@@ -37,15 +41,19 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
     public void getUserProfile(GetUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
         userProfileRepository.findById(request.getUserId())
                 .ifPresentOrElse(
-                        profile -> responseObserver.onNext(mapToResponse(profile)),
+                        profile -> {
+                            responseObserver.onNext(mapToResponse(profile));
+                            responseObserver.onCompleted();
+                        },
                         () -> responseObserver.onError(new RuntimeException("User profile not found"))
                 );
-        responseObserver.onCompleted();
     }
 
+    @SneakyThrows
     @Override
     @Transactional
     public void updateUserProfile(UpdateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
+        new UpdateUserProfileRequestValidator().assertValid(request, null);
         UserProfile existingProfile = userProfileRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User profile not found to update"));
 
