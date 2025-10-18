@@ -39,14 +39,15 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
-
+    implementation 'org.mapstruct:mapstruct:1.6.2'
     implementation 'build.buf.protoc-gen-validate:pgv-java-stub:0.8.0'
 
     compileOnly 'org.projectlombok:lombok'
     compileOnly "org.apache.tomcat:annotations-api:6.0.53"
     runtimeOnly 'org.postgresql:postgresql'
     annotationProcessor 'org.projectlombok:lombok'
-
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -85,12 +86,10 @@ protobuf {
                 }
             }
 
-            // Добавляем директорию, где лежит validate.proto
             task.builtins {
                 java {}
             }
 
-            // ВАЖНО: используем from, а не =
             task.includeDirs.from("${projectDir}/src/main/proto")
         }
     }

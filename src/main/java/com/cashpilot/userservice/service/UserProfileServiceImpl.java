@@ -1,86 +1,91 @@
 package com.cashpilot.userservice.service;
 
-import com.cashpilot.userservice.grpc.*;
 import com.cashpilot.userservice.entity.UserProfile;
+import com.cashpilot.userservice.exception.AlreadyExistException;
+import com.cashpilot.userservice.exception.NotFoundException;
+import com.cashpilot.userservice.exception.ValidationException;
+import com.cashpilot.userservice.grpc.*;
+import com.cashpilot.userservice.mapper.UserProfileMapper;
 import com.cashpilot.userservice.repository.UserProfileRepository;
-import io.envoyproxy.pgv.ValidationException;
-import io.envoyproxy.pgv.ValidatorImpl;
+import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.transaction.annotation.Transactional;
-
-
-import java.util.Optional;
 
 @GrpcService
 @RequiredArgsConstructor
 public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileServiceImplBase {
 
     private final UserProfileRepository userProfileRepository;
+    private final UserProfileMapper userProfileMapper;
+
+    @FunctionalInterface
+    private interface ValidatorAction {
+        void run() throws io.envoyproxy.pgv.ValidationException;
+    }
+
+
+    private void validate(ValidatorAction action) {
+        try {
+            action.run();
+        } catch (io.envoyproxy.pgv.ValidationException e) {
+            throw new ValidationException(e.getMessage());
+        }
+    }
 
     @Override
     @Transactional
     public void createUserProfile(CreateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
-        System.out.println("Request :"+ request);
-        UserProfile newUserProfile = new UserProfile();
-        newUserProfile.setUserId(request.getUserId());
-        newUserProfile.setUsername(request.getUsername());
-        newUserProfile.setEmail(request.getEmail());
-        newUserProfile.setDefaultCurrency("KZT");
+        validate(() -> new CreateUserProfileRequestValidator().assertValid(request, null));
 
+        if (userProfileRepository.existsById(request.getUserId())) {
+            throw new AlreadyExistException("User profile already exists with ID: " + request.getUserId());
+        }
+
+        UserProfile newUserProfile = userProfileMapper.toEntity(request);
         UserProfile savedProfile = userProfileRepository.save(newUserProfile);
 
-        responseObserver.onNext(mapToResponse(savedProfile));
+        responseObserver.onNext(userProfileMapper.toResponse(savedProfile));
         responseObserver.onCompleted();
     }
 
     @Override
     @Transactional(readOnly = true)
     public void getUserProfile(GetUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
-        userProfileRepository.findById(request.getUserId())
-                .ifPresentOrElse(
-                        profile -> {
-                            responseObserver.onNext(mapToResponse(profile));
-                            responseObserver.onCompleted();
-                        },
-                        () -> responseObserver.onError(new RuntimeException("User profile not found"))
-                );
-    }
+        validate(() -> new GetUserProfileRequestValidator().assertValid(request, null));
 
-    @SneakyThrows
-    @Override
-    @Transactional
-    public void updateUserProfile(UpdateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
-        new UpdateUserProfileRequestValidator().assertValid(request, null);
-        UserProfile existingProfile = userProfileRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User profile not found to update"));
+        UserProfile profile = userProfileRepository.findById(request.getUserId())
+                .orElseThrow(() -> new NotFoundException("User profile not found with ID: " + request.getUserId()));
 
-        if (!request.getFirstName().isEmpty()) {
-            existingProfile.setFirstName(request.getFirstName());
-        }
-        if (!request.getLastName().isEmpty()) {
-            existingProfile.setLastName(request.getLastName());
-        }
-        if (!request.getDefaultCurrency().isEmpty()) {
-            existingProfile.setDefaultCurrency(request.getDefaultCurrency());
-        }
-
-        UserProfile updatedProfile = userProfileRepository.save(existingProfile);
-
-        responseObserver.onNext(mapToResponse(updatedProfile));
+        responseObserver.onNext(userProfileMapper.toResponse(profile));
         responseObserver.onCompleted();
     }
 
-    private UserProfileResponse mapToResponse(UserProfile profile) {
-        return UserProfileResponse.newBuilder()
-                .setUserId(profile.getUserId())
-                .setUsername(profile.getUsername())
-                .setEmail(profile.getEmail())
-                .setFirstName(Optional.ofNullable(profile.getFirstName()).orElse(""))
-                .setLastName(Optional.ofNullable(profile.getLastName()).orElse(""))
-                .setDefaultCurrency(Optional.ofNullable(profile.getDefaultCurrency()).orElse(""))
-                .build();
+    @Override
+    @Transactional
+    public void updateUserProfile(UpdateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
+        validate(() -> new UpdateUserProfileRequestValidator().assertValid(request, null));
+
+        UserProfile existingProfile = userProfileRepository.findById(request.getUserId())
+                .orElseThrow(() -> new NotFoundException("User profile not found to update"));
+
+        userProfileMapper.updateEntityFromRequest(request, existingProfile);
+        UserProfile updatedProfile = userProfileRepository.save(existingProfile);
+
+        responseObserver.onNext(userProfileMapper.toResponse(updatedProfile));
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserProfile(DeleteUserProfileRequest request, StreamObserver<Empty> responseObserver) {
+        UserProfile profile = userProfileRepository.findById(request.getUserId())
+                .orElseThrow(() -> new NotFoundException("Cannot delete. User profile not found with ID: " + request.getUserId()));
+
+        userProfileRepository.delete(profile);
+
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 }
