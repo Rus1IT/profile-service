@@ -2,6 +2,16 @@ spring:
   application:
     name: user-service-cashpilot
 
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        register: true
+        health-check-path: /actuator/health
+        health-check-interval: 15s
+        health-check-port: 9094
+
   datasource:
     url: jdbc:postgresql://localhost:5432/cashpilot-user-service-postgresql
     username: admin
@@ -20,10 +30,12 @@ spring:
       ddl-auto: update
     show-sql: true
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
 
 server:
   port: 9094
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health"

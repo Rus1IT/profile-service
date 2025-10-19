@@ -20,19 +20,6 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
 
-    @FunctionalInterface
-    private interface ValidatorAction {
-        void run() throws io.envoyproxy.pgv.ValidationException;
-    }
-
-
-    private void validate(ValidatorAction action) {
-        try {
-            action.run();
-        } catch (io.envoyproxy.pgv.ValidationException e) {
-            throw new ValidationException(e.getMessage());
-        }
-    }
 
     @Override
     @Transactional
@@ -87,5 +74,19 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
 
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
+    }
+
+    @FunctionalInterface
+    private interface ValidatorAction {
+        void run() throws io.envoyproxy.pgv.ValidationException;
+    }
+
+
+    private void validate(ValidatorAction action) {
+        try {
+            action.run();
+        } catch (io.envoyproxy.pgv.ValidationException e) {
+            throw new ValidationException(e.getMessage());
+        }
     }
 }
