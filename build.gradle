@@ -45,7 +45,7 @@ dependencies {
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     implementation 'org.mapstruct:mapstruct:1.6.2'
     implementation 'build.buf.protoc-gen-validate:pgv-java-stub:0.8.0'
-
+    protobuf 'com.google.api.grpc:proto-google-common-protos:2.27.0'
     compileOnly 'org.projectlombok:lombok'
     compileOnly "org.apache.tomcat:annotations-api:6.0.53"
     runtimeOnly 'org.postgresql:postgresql'

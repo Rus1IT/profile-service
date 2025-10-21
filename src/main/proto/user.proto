@@ -5,16 +5,42 @@ option java_package = "com.cashpilot.userservice.grpc";
 option java_outer_classname = "UserProfileProto";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 import "validate/validate.proto";
 
 service UserProfileService {
-  rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse);
+  // GET /users/{user_id}
+  rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse) {
+    // Эта аннотация - то, что нужно Envoy
+    option (google.api.http) = {
+      get: "/users/{user_id}"
+    };
+  }
 
-  rpc CreateUserProfile(CreateUserProfileRequest) returns (UserProfileResponse);
+  // POST /users
+  rpc CreateUserProfile(CreateUserProfileRequest) returns (UserProfileResponse) {
+    option (google.api.http) = {
+      post: "/users"
+      body: "*" // Означает, что тело HTTP-запроса (JSON)
+      // будет использовано для заполнения CreateUserProfileRequest
+    };
+  }
 
-  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UserProfileResponse);
+  // PATCH /users/{user_id}
+  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UserProfileResponse) {
+    option (google.api.http) = {
+      patch: "/users/{user_id}"
+      body: "*" // Тело HTTP-запроса (JSON) пойдет в UpdateUserProfileRequest.
+      // Поле user_id будет взято из URL.
+    };
+  }
 
-  rpc DeleteUserProfile(DeleteUserProfileRequest) returns (google.protobuf.Empty);
+  // DELETE /users/{user_id}
+  rpc DeleteUserProfile(DeleteUserProfileRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/users/{user_id}"
+    };
+  }
 }
 
 message GetUserProfileRequest {
@@ -23,18 +49,14 @@ message GetUserProfileRequest {
 
 message CreateUserProfileRequest {
   string user_id = 1 [(validate.rules).string.min_len = 1];
-
   string username = 2 [(validate.rules).string = {min_len: 3, max_len: 30}];
-
   string email = 3 [(validate.rules).string.email = true];
 }
 
 message UpdateUserProfileRequest {
   string user_id = 1 [(validate.rules).string.min_len = 1];
-
   string first_name = 2 [(validate.rules).string = {min_len: 1, max_len: 50}];
   string last_name = 3 [(validate.rules).string = {min_len: 1, max_len: 50}];
-
   string default_currency = 4 [
     (validate.rules).string = {in: ["USD", "EUR", "KZT", "GBP", "RUB"]}
   ];
