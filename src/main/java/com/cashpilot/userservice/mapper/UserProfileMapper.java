@@ -10,6 +10,8 @@ import org.mapstruct.*;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface UserProfileMapper {
 
+    @Mapping(target = "firstName", source = "firstName", defaultValue = "")
+    @Mapping(target = "lastName", source = "lastName", defaultValue = "")
     UserProfileResponse toResponse(UserProfile userProfile);
 
 
