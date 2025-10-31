@@ -34,8 +34,19 @@ spring:
 server:
   port: 9094
 
+grpc:
+  server:
+    port: 9090
+
 management:
   endpoints:
     web:
       exposure:
         include: "health"
+
+
+logging:
+  level:
+    net.devh.boot.grpc: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG

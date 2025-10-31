@@ -1,5 +1,6 @@
 package com.cashpilot.userservice.service;
 
+import com.cashpilot.userservice.config.SecurityUtil;
 import com.cashpilot.userservice.entity.UserProfile;
 import com.cashpilot.userservice.exception.AlreadyExistException;
 import com.cashpilot.userservice.exception.NotFoundException;
@@ -10,68 +11,104 @@ import com.cashpilot.userservice.repository.UserProfileRepository;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @GrpcService
 @RequiredArgsConstructor
+@Slf4j
 public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileServiceImplBase {
 
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
-
+    private final SecurityUtil securityUtil;
 
     @Override
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public void createUserProfile(CreateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
+        System.out.println("Request: "+request);
+        String userId = securityUtil.getAuthenticatedUserId();
+
+        log.info("Received request to create user profile for userId: {}", userId);
         validate(() -> new CreateUserProfileRequestValidator().assertValid(request, null));
 
-        if (userProfileRepository.existsById(request.getUserId())) {
-            throw new AlreadyExistException("User profile already exists with ID: " + request.getUserId());
+        if (userProfileRepository.existsById(userId)) {
+            log.warn("User profile already exists for userId: {}. Throwing AlreadyExistException.", userId);
+            throw new AlreadyExistException("User profile already exists with ID: " + userId);
         }
 
         UserProfile newUserProfile = userProfileMapper.toEntity(request);
+        newUserProfile.setUserId(userId);
+
         UserProfile savedProfile = userProfileRepository.save(newUserProfile);
 
+        log.info("Successfully created user profile for userId: {}", savedProfile.getUserId());
         responseObserver.onNext(userProfileMapper.toResponse(savedProfile));
         responseObserver.onCompleted();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void getUserProfile(GetUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
-        validate(() -> new GetUserProfileRequestValidator().assertValid(request, null));
+    @PreAuthorize("isAuthenticated()")
+    public void getUserProfile(Empty request, StreamObserver<UserProfileResponse> responseObserver) {
+        String userId = securityUtil.getAuthenticatedUserId();
+        log.info("Received request to get user profile for userId: {}", userId);
 
-        UserProfile profile = userProfileRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundException("User profile not found with ID: " + request.getUserId()));
+        UserProfile profile = userProfileRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("User profile not found for userId: {}. Throwing NotFoundException.", userId);
+                    return new NotFoundException("User profile not found with ID: " + userId);
+                });
 
+        log.info("Successfully retrieved user profile for userId: {}", profile.getUserId());
         responseObserver.onNext(userProfileMapper.toResponse(profile));
         responseObserver.onCompleted();
     }
 
     @Override
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public void updateUserProfile(UpdateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
+        String userId = securityUtil.getAuthenticatedUserId();
+
+        log.info("Received request to update user profile for userId: {}", userId);
         validate(() -> new UpdateUserProfileRequestValidator().assertValid(request, null));
 
-        UserProfile existingProfile = userProfileRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundException("User profile not found to update"));
+        UserProfile existingProfile = userProfileRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("User profile not found for update, userId: {}. Throwing NotFoundException.", userId);
+                    return new NotFoundException("User profile not found to update");
+                });
 
         userProfileMapper.updateEntityFromRequest(request, existingProfile);
         UserProfile updatedProfile = userProfileRepository.save(existingProfile);
 
+        log.info("Successfully updated user profile for userId: {}", updatedProfile.getUserId());
         responseObserver.onNext(userProfileMapper.toResponse(updatedProfile));
         responseObserver.onCompleted();
     }
 
     @Override
     @Transactional
-    public void deleteUserProfile(DeleteUserProfileRequest request, StreamObserver<Empty> responseObserver) {
-        UserProfile profile = userProfileRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundException("Cannot delete. User profile not found with ID: " + request.getUserId()));
+    @PreAuthorize("isAuthenticated()")
+    public void deleteUserProfile(Empty request, StreamObserver<Empty> responseObserver) {
+        String userId = securityUtil.getAuthenticatedUserId();
+        log.info("Received request to delete user profile for userId: {}", userId);
+
+
+        UserProfile profile = userProfileRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("Cannot delete. User profile not found for userId: {}. Throwing NotFoundException.", userId);
+                    return new NotFoundException("Cannot delete. User profile not found with ID: " + userId);
+                });
 
         userProfileRepository.delete(profile);
 
+        log.info("Successfully deleted user profile for userId: {}", userId);
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
@@ -81,11 +118,11 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
         void run() throws io.envoyproxy.pgv.ValidationException;
     }
 
-
     private void validate(ValidatorAction action) {
         try {
             action.run();
         } catch (io.envoyproxy.pgv.ValidationException e) {
+            log.warn("Validation failed: {}", e.getMessage(), e);
             throw new ValidationException(e.getMessage());
         }
     }

@@ -11,10 +11,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp; // Для автоматической даты создания
-import org.hibernate.annotations.UpdateTimestamp;   // Для автоматической даты обновления
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;    // Современный стандарт для времени
+import java.time.Instant;
 
 @Entity
 @Table(name = "user_profiles")
@@ -33,7 +33,7 @@ public class UserProfile {
     private String defaultCurrency;
 
     @Column(name = "balance_visibility")
-    private boolean balanceVisibility; // Скрывать/показывать баланс на главном экране
+    private boolean balanceVisibility;
 
     @Column(name = "timezone", length = 50)
     private String timezone; // Например, "Europe/Berlin" или "Asia/Almaty"
@@ -43,7 +43,7 @@ public class UserProfile {
 
     @Column(name = "theme", length = 10)
     @Enumerated(EnumType.STRING)
-    private AppTheme theme; // LIGHT, DARK, SYSTEM
+    private AppTheme theme;
 
     @Column(name = "notify_on_budget_limit")
     private boolean sendNotificationToGmail;

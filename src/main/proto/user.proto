@@ -9,68 +9,72 @@ import "google/api/annotations.proto";
 import "validate/validate.proto";
 
 service UserProfileService {
-  // GET /users/{user_id}
-  rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse) {
-    // Эта аннотация - то, что нужно Envoy
+
+  rpc GetUserProfile(google.protobuf.Empty) returns (UserProfileResponse) {
     option (google.api.http) = {
-      get: "/users/{user_id}"
+      get: "/users/me"
     };
   }
 
-  // POST /users
   rpc CreateUserProfile(CreateUserProfileRequest) returns (UserProfileResponse) {
     option (google.api.http) = {
       post: "/users"
-      body: "*" // Означает, что тело HTTP-запроса (JSON)
-      // будет использовано для заполнения CreateUserProfileRequest
+      body: "*"
     };
   }
 
-  // PATCH /users/{user_id}
   rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UserProfileResponse) {
     option (google.api.http) = {
-      patch: "/users/{user_id}"
-      body: "*" // Тело HTTP-запроса (JSON) пойдет в UpdateUserProfileRequest.
-      // Поле user_id будет взято из URL.
+      patch: "/users/me"
+      body: "*"
     };
   }
 
-  // DELETE /users/{user_id}
-  rpc DeleteUserProfile(DeleteUserProfileRequest) returns (google.protobuf.Empty) {
+  rpc DeleteUserProfile(google.protobuf.Empty) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/users/{user_id}"
+      delete: "/users/me"
     };
   }
-}
-
-message GetUserProfileRequest {
-  string user_id = 1 [(validate.rules).string.min_len = 1];
 }
 
 message CreateUserProfileRequest {
-  string user_id = 1 [(validate.rules).string.min_len = 1];
-  string username = 2 [(validate.rules).string = {min_len: 3, max_len: 30}];
-  string email = 3 [(validate.rules).string.email = true];
+  string default_currency = 1 [
+    (validate.rules).string = {in: ["USD", "EUR", "KZT", "GBP", "RUB"]}
+  ];
+  bool balance_visibility = 2;
+  string timezone = 3 [(validate.rules).string.min_len = 1];
+  string language = 4 [(validate.rules).string = {min_len: 2, max_len: 5}];
+  string theme = 5 [
+    (validate.rules).string = {in: ["LIGHT", "DARK", "SYSTEM"]}
+  ];
+  bool send_notification_to_gmail = 6;
+  bool onboarding_completed = 7;
 }
 
 message UpdateUserProfileRequest {
-  string user_id = 1 [(validate.rules).string.min_len = 1];
-  string first_name = 2 [(validate.rules).string = {min_len: 1, max_len: 50}];
-  string last_name = 3 [(validate.rules).string = {min_len: 1, max_len: 50}];
-  string default_currency = 4 [
+  string default_currency = 1 [
     (validate.rules).string = {in: ["USD", "EUR", "KZT", "GBP", "RUB"]}
   ];
+  bool balance_visibility = 2;
+  string timezone = 3 [(validate.rules).string.min_len = 1];
+  string language = 4 [(validate.rules).string = {min_len: 2, max_len: 5}];
+  string theme = 5 [
+    (validate.rules).string = {in: ["LIGHT", "DARK", "SYSTEM"]}
+  ];
+  bool send_notification_to_gmail = 6;
+  bool onboarding_completed = 7;
 }
+
 
 message UserProfileResponse {
   string user_id = 1;
-  string username = 2;
-  string email = 3;
-  string first_name = 4;
-  string last_name = 5;
-  string default_currency = 6;
-}
-
-message DeleteUserProfileRequest {
-  string user_id = 1 [(validate.rules).string.min_len = 1];
+  string default_currency = 2;
+  bool balance_visibility = 3;
+  string timezone = 4;
+  string language = 5;
+  string theme = 6;
+  bool send_notification_to_gmail = 7;
+  bool onboarding_completed = 8;
+  string created_at = 9;
+  string updated_at = 10;
 }
