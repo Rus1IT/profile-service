@@ -25,16 +25,16 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
     private final UserProfileRepository userProfileRepository;
     private final UserProfileMapper userProfileMapper;
     private final SecurityUtil securityUtil;
+    private final ValidatorService validatorService;
 
     @Override
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public void createUserProfile(CreateUserProfileRequest request, StreamObserver<UserProfileResponse> responseObserver) {
-        System.out.println("Request: "+request);
         String userId = securityUtil.getAuthenticatedUserId();
 
         log.info("Received request to create user profile for userId: {}", userId);
-        validate(() -> new CreateUserProfileRequestValidator().assertValid(request, null));
+        validatorService.validate(() -> new CreateUserProfileRequestValidator().assertValid(request, null));
 
         if (userProfileRepository.existsById(userId)) {
             log.warn("User profile already exists for userId: {}. Throwing AlreadyExistException.", userId);
@@ -76,7 +76,7 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
         String userId = securityUtil.getAuthenticatedUserId();
 
         log.info("Received request to update user profile for userId: {}", userId);
-        validate(() -> new UpdateUserProfileRequestValidator().assertValid(request, null));
+        validatorService.validate(() -> new UpdateUserProfileRequestValidator().assertValid(request, null));
 
         UserProfile existingProfile = userProfileRepository.findById(userId)
                 .orElseThrow(() -> {
@@ -111,19 +111,5 @@ public class UserProfileServiceImpl extends UserProfileServiceGrpc.UserProfileSe
         log.info("Successfully deleted user profile for userId: {}", userId);
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
-    }
-
-    @FunctionalInterface
-    private interface ValidatorAction {
-        void run() throws io.envoyproxy.pgv.ValidationException;
-    }
-
-    private void validate(ValidatorAction action) {
-        try {
-            action.run();
-        } catch (io.envoyproxy.pgv.ValidationException e) {
-            log.warn("Validation failed: {}", e.getMessage(), e);
-            throw new ValidationException(e.getMessage());
-        }
     }
 }

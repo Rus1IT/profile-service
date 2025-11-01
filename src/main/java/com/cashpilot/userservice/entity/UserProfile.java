@@ -1,12 +1,7 @@
 package com.cashpilot.userservice.entity;
 
 import com.cashpilot.userservice.enums.AppTheme;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -15,6 +10,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "user_profiles")
@@ -58,4 +55,12 @@ public class UserProfile {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+
+    @OneToMany(
+            mappedBy = "userProfile",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private Set<Account> accounts = new HashSet<>();
 }
