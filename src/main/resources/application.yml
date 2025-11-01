@@ -4,18 +4,18 @@ spring:
 
   cloud:
     consul:
-      host: localhost
-      port: 8500
+      host: ${SPRING_CLOUD_CONSUL_HOST}
+      port: ${SPRING_CLOUD_CONSUL_PORT}
       discovery:
         register: true
         health-check-path: /actuator/health
         health-check-interval: 15s
-        health-check-port: 9094
+        health-check-port: ${SERVER_PORT}
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/cashpilot-user-service-postgresql
-    username: admin
-    password: admin
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
 
 
@@ -23,20 +23,25 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/cashpilot
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI}
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDLAUTO}
+    show-sql: ${SPRING_JPA_SHOWSQL}
 
+  flyway:
+    user: admin
+    password: admin
+    url: ${DB_URL}
+    locations: classpath:db/migration
 
 server:
-  port: 9094
+  port: ${SERVER_PORT}
 
 grpc:
   server:
-    port: 9090
+    port: ${GRPC_SERVER_PORT}
 
 management:
   endpoints:
