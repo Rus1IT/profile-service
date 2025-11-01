@@ -1,5 +1,6 @@
 package com.cashpilot.userservice.entity;
 
+import com.cashpilot.userservice.enums.BankName;
 import com.cashpilot.userservice.enums.Currency;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -33,7 +34,8 @@ public class Account {
     private UserProfile userProfile;
 
     @Column(name = "bank_name", nullable = false, length = 100)
-    private String bankName;
+    @Enumerated(EnumType.STRING)
+    private BankName bankName;
 
     @Column(name = "account_name", nullable = false, length = 100)
     private String accountName;
