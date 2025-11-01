@@ -1,5 +1,6 @@
 package com.cashpilot.userservice.entity;
 
+import com.cashpilot.userservice.enums.Currency;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,14 +39,14 @@ public class Account {
     private String accountName;
 
     @Column(name = "currency", nullable = false, length = 3)
-    private String currency;
+    @Enumerated(EnumType.STRING)
+    private Currency currency;
 
-    // Можно добавить поля для отслеживания дат
     @Column(name = "first_transaction_date")
-    private Instant firstTransactionDate; // Самая ранняя транзакция
+    private Instant firstTransactionDate;
 
     @Column(name = "last_transaction_date")
-    private Instant lastTransactionDate; // Самая последняя транзакция
+    private Instant lastTransactionDate;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
