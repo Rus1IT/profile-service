@@ -1,5 +1,5 @@
 package com.cashpilot.userservice.enums;
 
 public enum BankName {
-    Kaspi, Halyk
+    KASPI, HALYK
 }
