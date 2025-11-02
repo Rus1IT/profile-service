@@ -83,6 +83,7 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("createUserProfile: должен успешно создать профиль, если он не существует")
     void createUserProfile_shouldSucceed_whenProfileDoesNotExist() {
+        // Given
         CreateUserProfileRequest request = CreateUserProfileRequest.newBuilder()
                 .setDefaultCurrency("KZT")
                 .setLanguage("ru")
@@ -100,8 +101,10 @@ class UserProfileServiceImplTest {
 
         ArgumentCaptor<UserProfileResponse> responseCaptor = ArgumentCaptor.forClass(UserProfileResponse.class);
 
+        // When
         userProfileService.createUserProfile(request, userProfileResponseObserver);
 
+        // Then
         verify(validatorService).validate(any());
         verify(userProfileRepository).save(testUserProfile);
         verify(userProfileResponseObserver).onNext(responseCaptor.capture());
@@ -116,10 +119,12 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("createUserProfile: должен выбросить AlreadyExistException, если профиль уже существует")
     void createUserProfile_shouldThrowAlreadyExistException_whenProfileExists() {
+        // Given
         CreateUserProfileRequest request = CreateUserProfileRequest.getDefaultInstance();
         doNothing().when(validatorService).validate(any());
         when(userProfileRepository.existsById(TEST_USER_ID)).thenReturn(true);
 
+        // When & Then
         assertThrows(AlreadyExistException.class, () -> {
             userProfileService.createUserProfile(request, userProfileResponseObserver);
         });
@@ -130,10 +135,12 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("createUserProfile: должен выбросить ValidationException, если валидация не пройдена")
     void createUserProfile_shouldThrowValidationException_whenValidationFails() {
+        // Given
         CreateUserProfileRequest request = CreateUserProfileRequest.getDefaultInstance();
         doThrow(new ValidationException("Validation failed"))
                 .when(validatorService).validate(any());
 
+        // When & Then
         assertThrows(ValidationException.class, () -> {
             userProfileService.createUserProfile(request, userProfileResponseObserver);
         });
@@ -145,13 +152,16 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("getUserProfile: должен успешно вернуть профиль, если он найден")
     void getUserProfile_shouldSucceed_whenProfileFound() {
+        // Given
         when(userProfileRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(testUserProfile));
         when(userProfileMapper.toResponse(testUserProfile)).thenReturn(testUserProfileResponse);
 
         ArgumentCaptor<UserProfileResponse> responseCaptor = ArgumentCaptor.forClass(UserProfileResponse.class);
 
+        // When
         userProfileService.getUserProfile(Empty.getDefaultInstance(), userProfileResponseObserver);
 
+        // Then
         verify(userProfileRepository).findById(TEST_USER_ID);
         verify(userProfileResponseObserver).onNext(responseCaptor.capture());
         verify(userProfileResponseObserver).onCompleted();
@@ -163,8 +173,10 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("getUserProfile: должен выбросить NotFoundException, если профиль не найден")
     void getUserProfile_shouldThrowNotFoundException_whenProfileNotFound() {
+        // Given
         when(userProfileRepository.findById(TEST_USER_ID)).thenReturn(Optional.empty());
 
+        // When & Then
         assertThrows(NotFoundException.class, () -> {
             userProfileService.getUserProfile(Empty.getDefaultInstance(), userProfileResponseObserver);
         });
@@ -175,6 +187,7 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("updateUserProfile: должен успешно обновить профиль")
     void updateUserProfile_shouldSucceed_whenProfileExists() {
+        // Given
         UpdateUserProfileRequest request = UpdateUserProfileRequest.newBuilder()
                 .setDefaultCurrency("EUR")
                 .setLanguage("en")
@@ -199,8 +212,10 @@ class UserProfileServiceImplTest {
 
         ArgumentCaptor<UserProfileResponse> responseCaptor = ArgumentCaptor.forClass(UserProfileResponse.class);
 
+        // When
         userProfileService.updateUserProfile(request, userProfileResponseObserver);
 
+        // Then
         verify(validatorService).validate(any());
         verify(userProfileMapper).updateEntityFromRequest(request, existingProfile);
         verify(userProfileRepository).save(existingProfile);
@@ -214,10 +229,12 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("updateUserProfile: должен выбросить NotFoundException, если профиль для обновления не найден")
     void updateUserProfile_shouldThrowNotFoundException_whenProfileNotFound() {
+        // Given
         UpdateUserProfileRequest request = UpdateUserProfileRequest.getDefaultInstance();
         doNothing().when(validatorService).validate(any());
         when(userProfileRepository.findById(TEST_USER_ID)).thenReturn(Optional.empty());
 
+        // When & Then
         assertThrows(NotFoundException.class, () -> {
             userProfileService.updateUserProfile(request, userProfileResponseObserver);
         });
@@ -228,11 +245,14 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("deleteUserProfile: должен успешно удалить профиль")
     void deleteUserProfile_shouldSucceed_whenProfileExists() {
+        // Given
         when(userProfileRepository.findById(TEST_USER_ID)).thenReturn(Optional.of(testUserProfile));
         ArgumentCaptor<Empty> responseCaptor = ArgumentCaptor.forClass(Empty.class);
 
+        // When
         userProfileService.deleteUserProfile(Empty.getDefaultInstance(), emptyResponseObserver);
 
+        // Then
         verify(userProfileRepository).delete(testUserProfile);
         verify(emptyResponseObserver).onNext(responseCaptor.capture());
         assertThat(responseCaptor.getValue()).isEqualTo(Empty.getDefaultInstance());
@@ -242,8 +262,10 @@ class UserProfileServiceImplTest {
     @Test
     @DisplayName("deleteUserProfile: должен выбросить NotFoundException, если профиль для удаления не найден")
     void deleteUserProfile_shouldThrowNotFoundException_whenProfileNotFound() {
+        // Given
         when(userProfileRepository.findById(TEST_USER_ID)).thenReturn(Optional.empty());
 
+        // When & Then
         assertThrows(NotFoundException.class, () -> {
             userProfileService.deleteUserProfile(Empty.getDefaultInstance(), emptyResponseObserver);
         });
